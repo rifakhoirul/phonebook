@@ -3,25 +3,9 @@ var router = express.Router();
 const Phonebooks = require('../models/Phonebooks')
 const Response = require('../models/Response')
 
-const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
-const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
-
-const serviceAccount = require('../serviceAccountKey.json');
-
-initializeApp({
-  credential: cert(serviceAccount)
-});
-
-const db = getFirestore();
-
 router.get('/', async function (req, res, next) {
   try {
-    const snapshot = await db.collection('phonebook').orderBy('createdAt').get();
-    console.log(snapshot)
-    let phonebooks = []
-    snapshot.forEach((doc) => {
-      phonebooks.push({ _id: doc.id, ...doc.data() })
-    });
+    const phonebooks = await Phonebooks.find()
     res.json(phonebooks)
   } catch (error) {
     console.log(error)
@@ -30,46 +14,40 @@ router.get('/', async function (req, res, next) {
 });
 
 router.post('/search', async function (req, res, next) {
-  try {
-    let { name, phone, sort } = req.body
-
-    let snapshot
+  let { name, phone, sort } = req.body
+  if (sort) {
     switch (sort) {
-      case 'id-asc':
-        snapshot = await db.collection('phonebook').orderBy('createdAt').get();
-        break
       case 'id-desc':
-        snapshot = await db.collection('phonebook').orderBy('createdAt', 'desc').get();
+        sort = { createdAt: -1 }
         break
       case 'name-asc':
-        snapshot = await db.collection('phonebook').orderBy('name').get();
+        sort = { name: 1 }
         break
       case 'name-desc':
-        snapshot = await db.collection('phonebook').orderBy('name', 'desc').get();
+        sort = { name: -1 }
         break
       case 'phone-asc':
-        snapshot = await db.collection('phonebook').orderBy('phone').get();
+        sort = { phone: 1 }
         break
       case 'phone-desc':
-        snapshot = await db.collection('phonebook').orderBy('phone', 'desc').get();
+        sort = { phone: -1 }
         break
+      case 'id-asc':
       default:
-        snapshot = await db.collection('phonebook').orderBy('createdAt').get();
         break
     }
-
-    let phonebooks = []
-    snapshot.forEach((doc) => {
-      phonebooks.push({ _id: doc.id, ...doc.data() })
-    });
-
-    if (name) {
-      phonebooks = phonebooks.filter(item => item.name.toLowerCase().includes(name.toLowerCase()))
+  }
+  try {
+    let phonebooks
+    if (!name && !phone) {
+      phonebooks = await Phonebooks.find().sort(sort)
+    } else if (!name && phone) {
+      phonebooks = await Phonebooks.find({ 'phone': { $regex: new RegExp(phone, 'i') } }).sort(sort)
+    } else if (name && !phone) {
+      phonebooks = await Phonebooks.find({ 'name': { $regex: new RegExp(name, 'i') } }).sort(sort)
+    } else if (name && phone) {
+      phonebooks = await Phonebooks.find({ 'name': { $regex: new RegExp(name, 'i') }, 'phone': { $regex: new RegExp(phone, 'i') } }).sort(sort)
     }
-    if (phone) {
-      phonebooks = phonebooks.filter(item => item.phone.includes(phone))
-    }
-
     res.json(phonebooks)
   } catch (error) {
     console.log(error)
@@ -79,10 +57,8 @@ router.post('/search', async function (req, res, next) {
 
 router.post('/', async function (req, res, next) {
   try {
-    const add = await db.collection('phonebook').add({ ...req.body, createdAt: Date.now() })
-    const snapshot = await db.collection('phonebook').doc(add.id).get();
-    const phonebook = snapshot.data()
-    res.json(new Response({ _id: add.id, ...phonebook }))
+    const phonebooks = await Phonebooks.create({ ...req.body })
+    res.json(new Response(phonebooks))
   } catch (error) {
     console.log(error)
     res.status(500).json(new Response({ message: error }, false))
@@ -91,9 +67,8 @@ router.post('/', async function (req, res, next) {
 
 router.put('/:id', async function (req, res, next) {
   try {
-    const update = await db.collection('phonebook').doc(req.params.id).update({ ...req.body });
-    const snapshot = await db.collection('phonebook').doc(req.params.id).get();
-    const phonebook = snapshot.data()
+    await Phonebooks.findByIdAndUpdate(req.params.id, { ...req.body })
+    const phonebook = await Phonebooks.find()
     res.json(new Response(phonebook))
   } catch (error) {
     console.log(error)
@@ -103,8 +78,8 @@ router.put('/:id', async function (req, res, next) {
 
 router.delete('/:id', async function (req, res, next) {
   try {
-    const del = await db.collection('phonebook').doc(req.params.id).delete();
-    res.json(new Response({ message: 'deleted success' }))
+    const phonebook = await Phonebooks.findByIdAndDelete(req.params.id)
+    res.json(new Response(phonebook))
   } catch (error) {
     console.log(error)
     res.status(500).json(new Response({ message: error }, false))

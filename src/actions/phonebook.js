@@ -1,11 +1,8 @@
-import axios from 'axios'
 import * as actions from '../constants'
 import { v4 as uuidv4 } from 'uuid';
+import { request, gql } from 'graphql-request'
 
-const request = axios.create({
-    baseURL: 'http://localhost:3001/api/',
-    timeout: 10000
-})
+const endpoint = 'http://localhost:3001/graphql'
 
 const loadPhonebookSuccess = phonebooks => ({
     type: actions.LOAD_PHONEBOOK_SUCCESS,
@@ -16,11 +13,21 @@ const loadPhonebookFailure = () => ({
 })
 
 export const loadPhonebook = () => (dispatch) => {
-    return request.get('phonebooks').then(response => {
-        response.data.map(i => {
+    const queryLoad = gql`
+    query{
+        getPhonebooks{
+          _id
+          name
+          phone
+              createdAt
+        }
+      }
+    `
+    return request(endpoint, queryLoad).then((response) => {
+        response.getPhonebooks.map(i => {
             return i.sent = true
         })
-        dispatch(loadPhonebookSuccess(response.data))
+        dispatch(loadPhonebookSuccess(response.getPhonebooks))
     }).catch(err => {
         dispatch(loadPhonebookFailure())
     })
@@ -42,11 +49,23 @@ const addDrawPhonebook = (_id, name, phone) => ({
 export const addPhonebook = (name, phone) => (dispatch) => {
     const _id = uuidv4()
     dispatch(addDrawPhonebook(_id, name, phone))
-    return request.post(`phonebooks`, {
+
+    const mutationAdd = gql`
+    mutation createPhonebook($name: String, $phone: String){
+        createPhonebook(input: {name:$name, phone:$phone}){
+            _id
+           name
+           phone
+         } 
+       }
+    `
+    const variablesAdd = {
         name: name,
-        phone: phone
-    }).then(response => {
-        dispatch(addPhonebookSuccess(_id, response.data.data))
+        phone: phone,
+    }
+
+    return request(endpoint, mutationAdd, variablesAdd).then((response) => {
+        dispatch(addPhonebookSuccess(_id, response.createPhonebook))
     }).catch(err => {
         dispatch(addPhonebookFailure(_id))
     })
@@ -61,7 +80,20 @@ const removePhonebookFailure = () => ({
 })
 
 export const removePhonebook = (_id) => (dispatch) => {
-    return request.delete(`phonebooks/${_id}`).then(response => {
+    const mutationDelete = gql`
+    mutation deletePhonebook($_id:ID!){
+        deletePhonebook(_id:$_id){
+            _id
+           name
+           phone
+         } 
+       }
+    `
+    const variablesDelete = {
+        _id: _id,
+    }
+
+    return request(endpoint, mutationDelete, variablesDelete).then((response) => {
         dispatch(removePhonebookSuccess(_id))
     }).catch(err => {
         dispatch(removePhonebookFailure(_id))
@@ -81,9 +113,22 @@ const resendPhonebookCancel = (_id) => ({
 })
 
 export const resendPhonebook = (_id, name, phone) => (dispatch) => {
-    return request.post(`phonebooks`, { name: name, phone: phone }).then(response => {
-        console.log(response)
-        dispatch(resendPhonebookSuccess(_id, response.data.data._id))
+    const mutationResend = gql`
+    mutation createPhonebook($name: String, $phone: String){
+        createPhonebook(input: {name:$name, phone:$phone}){
+            _id
+           name
+           phone
+         } 
+       }
+    `
+    const variablesResend = {
+        name: name,
+        phone: phone,
+    }
+
+    return request(endpoint, mutationResend, variablesResend).then((response) => {
+        dispatch(resendPhonebookSuccess(_id, response.createPhonebook._id))
     }).catch(err => {
         dispatch(resendPhonebookFailure())
     })
@@ -102,12 +147,25 @@ const editPhonebookFailure = () => ({
 })
 
 export const editPhonebook = (id, name, phone) => (dispatch) => {
-    return request.put(`phonebooks/${id}`, {
+    const mutationEdit = gql`
+    mutation updatePhonebook($_id:ID!, $name: String, $phone: String){
+        updatePhonebook(_id:$_id, input: {name:$name, phone:$phone}){
+            _id
+           name
+           phone
+         } 
+       }
+    `
+    const variablesEdit = {
+        _id:id,
         name: name,
         phone: phone,
-    }).then(response => {
+    }
+
+    return request(endpoint, mutationEdit, variablesEdit).then((response) => {
         dispatch(editPhonebookSuccess(id, name, phone))
     }).catch(err => {
+        console.error(err)
         dispatch(editPhonebookFailure())
     })
 }
@@ -121,13 +179,26 @@ const searchPhonebookFailure = () => ({
 })
 
 export const searchPhonebook = (name, phone, sort) => (dispatch) => {
-    return request.post(`phonebooks/search`, {
+    const querySearch = gql`
+    query searchPhonebooks($name: String, $phone: String, $sort: String){
+        searchPhonebooks(name: $name, phone: $phone, sort: $sort){
+          _id
+          name
+          phone
+          createdAt
+        }
+      }
+    `
+    const variablesSearch = {
         name: name,
         phone: phone,
         sort: sort
-    }).then(response => {
-        dispatch(searchPhonebookSuccess(response.data))
+    }
+
+    return request(endpoint, querySearch, variablesSearch).then((response) => {
+        dispatch(searchPhonebookSuccess(response.searchPhonebooks))
     }).catch(err => {
+        console.error(err)
         dispatch(searchPhonebookFailure())
     })
 }
