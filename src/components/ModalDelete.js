@@ -2,6 +2,12 @@ import React, { Component } from 'react'
 import { Button, Modal } from 'react-bootstrap'
 
 export default class ModalDelete extends Component {
+  constructor(props){
+    super(props)
+    this.state={
+      
+    }
+  }
   render() {
     return (
       <Modal

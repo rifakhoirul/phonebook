@@ -62,7 +62,7 @@ router.post('/', async function (req, res, next) {
     res.json(new Response(phonebooks))
   } catch (error) {
     console.log(error)
-    res.status(500).json(new Response({ message: err }, false))
+    res.status(500).json(new Response({ message: error }, false))
   }
 });
 
@@ -73,7 +73,7 @@ router.put('/:id', async function (req, res, next) {
     res.json(new Response(phonebook))
   } catch (error) {
     console.log(error)
-    res.status(500).json(new Response({ message: err }, false))
+    res.status(500).json(new Response({ message: error }, false))
   }
 });
 
@@ -83,7 +83,7 @@ router.delete('/:id', async function (req, res, next) {
     res.json(new Response(phonebook))
   } catch (error) {
     console.log(error)
-    res.status(500).json(new Response({ message: err }, false))
+    res.status(500).json(new Response({ message: error }, false))
   }
 });
 

@@ -2,6 +2,13 @@ import React, { Component } from 'react'
 import { Row, Col, Form, Card } from 'react-bootstrap'
 
 export default class SearchForm extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+
+    }
+    
+  }
   render() {
     return (
       <Card className="mt-3">

@@ -2,6 +2,12 @@ import React, { Component } from 'react'
 import { Pagination } from 'react-bootstrap'
 
 export default class PaginationButton extends Component {
+  constructor(props){
+    super(props)
+    this.state={
+      
+    }
+  }
   render() {
     return (
       <Pagination className="mb-5">
