@@ -1,24 +1,16 @@
-import React, { Component } from 'react'
+import React from 'react'
 import { Pagination } from 'react-bootstrap'
 
-export default class PaginationButton extends Component {
-  constructor(props){
-    super(props)
-    this.state={
-      
-    }
-  }
-  render() {
-    return (
-      <Pagination className="mb-5">
-        <Pagination.Prev onClick={() => this.props.paginate(this.props.currentPage - 1)} disabled={this.props.currentPage === 1} />
-        {this.props.pageNumbers.map(number => (
-          <Pagination.Item key={number} active={number === this.props.currentPage} onClick={() => this.props.paginate(number)}>
-            {number}
-          </Pagination.Item>
-        ))}
-        <Pagination.Next onClick={() => this.props.paginate(this.props.currentPage + 1)} disabled={this.props.currentPage === this.props.pageNumbers.length} />
-      </Pagination>
-    )
-  }
+export default function PaginationButton({paginate, currentPage, pageNumbers}) {
+  return (
+    <Pagination className="mb-5">
+      <Pagination.Prev onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} />
+      {pageNumbers.map(number => (
+        <Pagination.Item key={number} active={number === currentPage} onClick={() => paginate(number)}>
+          {number}
+        </Pagination.Item>
+      ))}
+      <Pagination.Next onClick={() => paginate(currentPage + 1)} disabled={currentPage === pageNumbers.length} />
+    </Pagination>
+  )
 }

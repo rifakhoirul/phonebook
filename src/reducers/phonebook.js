@@ -1,15 +1,16 @@
 import * as actions from '../constants'
 
-const phonebook = (state = { phonebooks: [], live: false }, action) => {
+const phonebook = (state = { phonebooks: [], live: true }, action) => {
     switch (action.type) {
         case actions.LOAD_PHONEBOOK_SUCCESS:
             return { phonebooks: action.phonebooks, live: true }
         case actions.ADD_DRAW_PHONEBOOK:
+            console.log('di sini')
             return {
                 phonebooks: [...state.phonebooks, {
                     _id: action._id, name: action.name, phone: action.phone, sent: true
                 }],
-                live: false
+                live: state.live
             }
         case actions.ADD_PHONEBOOK_SUCCESS:
             return {
@@ -65,15 +66,19 @@ const phonebook = (state = { phonebooks: [], live: false }, action) => {
             }
         case actions.SEARCH_PHONEBOOK_SUCCESS:
             return { phonebooks: action.phonebooks, live: true }
+        case actions.LOAD_PHONEBOOK_FAILURE:
         case actions.RESEND_PHONEBOOK_FAILURE:
         case actions.SEARCH_PHONEBOOK_FAILURE:
         case actions.EDIT_PHONEBOOK_FAILURE:
-        case actions.LOAD_PHONEBOOK_FAILURE:
         case actions.REMOVE_PHONEBOOK_FAILURE:
-        default:
             return {
                 phonebooks: state.phonebooks,
                 live: false
+            }
+        default:
+            return {
+                phonebooks: state.phonebooks,
+                live: state.live
             }
     }
 }

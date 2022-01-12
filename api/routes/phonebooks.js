@@ -37,6 +37,7 @@ router.post('/search', async function (req, res, next) {
         break
     }
   }
+  console.log(name,phone)
   try {
     let phonebooks
     if (!name && !phone) {

@@ -1,17 +1,9 @@
-import React, { Component } from 'react'
+import React from 'react'
 import { Row, Col, Form, Card } from 'react-bootstrap'
 
-export default class SearchForm extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-
-    }
-    
-  }
-  render() {
-    return (
-      <Card className="mt-3">
+export default function SearchForm({searchPhonebooks,inputSearchName,inputSearchPhone}) {
+  return (
+    <Card className="mt-3">
         <Card.Header className="" as="h5">Search Form</Card.Header>
         <Card.Body>
           <Form className="mt-2">
@@ -20,18 +12,17 @@ export default class SearchForm extends Component {
                 Name
               </Form.Label>
               <Col sm="6">
-                <Form.Control type="text" placeholder="Name" onKeyUp={() => { this.props.searchPhonebooks() }} ref={this.props.inputSearchName} />
+                <Form.Control type="text" placeholder="Name" onKeyUp={() => { searchPhonebooks() }} ref={inputSearchName} />
               </Col>
               <Form.Label column sm="1" className="">
                 Phone
               </Form.Label>
               <Col sm="4">
-                <Form.Control type="tel" placeholder="Phone" onKeyUp={() => { this.props.searchPhonebooks() }} ref={this.props.inputSearchPhone} />
+                <Form.Control type="tel" placeholder="Phone" onKeyUp={() => { searchPhonebooks() }} ref={inputSearchPhone} />
               </Col>
             </Form.Group>
           </Form>
         </Card.Body>
       </Card>
-    )
-  }
+  )
 }

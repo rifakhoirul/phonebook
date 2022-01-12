@@ -1,18 +1,11 @@
-import React, { Component } from 'react'
+import React from 'react'
 import { Button, Modal } from 'react-bootstrap'
 
-export default class ModalDelete extends Component {
-  constructor(props){
-    super(props)
-    this.state={
-      
-    }
-  }
-  render() {
+export default function ModalDelete({modalOpen,closeModal,deletePhonebook}) {
     return (
       <Modal
-        show={this.props.modalOpen}
-        onHide={this.props.closeModal}
+        show={modalOpen}
+        onHide={closeModal}
         backdrop="static"
         keyboard={false}
       >
@@ -23,12 +16,11 @@ export default class ModalDelete extends Component {
           Are you sure want to delete this?
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={this.props.closeModal}>
+          <Button variant="outline-secondary" onClick={closeModal}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={this.props.deletePhonebook}>Yes</Button>
+          <Button variant="danger" onClick={deletePhonebook}>Yes</Button>
         </Modal.Footer>
       </Modal>
     )
-  }
 }
