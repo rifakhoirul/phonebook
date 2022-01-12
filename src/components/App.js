@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { Component } from 'react'
+import axios from 'axios'
 import { Container } from 'react-bootstrap'
 import AddPhonebook from './AddPhonebook'
 import ModalDelete from './ModalDelete'
@@ -6,7 +7,6 @@ import PaginationButton from './PaginationButton'
 import SearchForm from './SearchForm'
 import TablePhonebook from './TablePhonebook'
 import Title from './Title'
-import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid';
 
 const request = axios.create({
@@ -14,224 +14,314 @@ const request = axios.create({
     timeout: 10000
 })
 
-function App() {
-    const [open, setOpen] = useState(false);
-    const [phonebooks, setPhonebooks] = useState([])
-    const [addName, setAddName] = useState()
-    const [addPhone, setAddPhone] = useState()
-    const [editId, setEditId] = useState()
-    const [editName, setEditName] = useState()
-    const [editPhone, setEditPhone] = useState()
-    const [modalOpen, setModalOpen] = useState(false)
-    const [showAlert, setShowAlert] = useState(false)
-    const [deleteId, setDeleteId] = useState()
-    const [sortBy, setSortBy] = useState()
-    const [loading, setLoading] = useState(false)
-    const [currentPage, setCurrentPage] = useState(1)
-    const [postsPerPage] = useState(3)
-    const inputSearchName = useRef();
-    const inputSearchPhone = useRef();
-    const [showAlertCon, setShowAlertCon] = useState(false)
+export default class App extends Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            open: false,
+            phonebooks: [],
+            addName: '',
+            addPhone: '',
+            editId: '',
+            editName: '',
+            editPhone: '',
+            modalOpen: false,
+            showAlert: false,
+            deleteId: '',
+            sortBy: '',
+            loading: false,
+            currentPage: 1,
+            postsPerPage: 3,
+            showAlertCon: false
+        }
+        this.inputSearchName = React.createRef();
+        this.inputSearchPhone = React.createRef();
 
-    useEffect(() => {
-        const fetchPhonebooks = () => {
-            setLoading(true)
-            request.get('phonebooks').then(response => {
-                response.data.map(i => {
-                    return i.sent = true
-                })
-                setLoading(false)
-                setPhonebooks(response.data)
-                setShowAlertCon(false)
-            }).catch(err => {
-                console.log(err)
-                setShowAlertCon(true)
+        this.handleAddName = this.handleAddName.bind(this)
+        this.handleAddPhone = this.handleAddPhone.bind(this)
+        this.handleSubmitAdd = this.handleSubmitAdd.bind(this)
+        this.handleEditName = this.handleEditName.bind(this)
+        this.handleEditPhone = this.handleEditPhone.bind(this)
+        this.handleEdit = this.handleEdit.bind(this)
+        this.handleSubmitEdit = this.handleSubmitEdit.bind(this)
+        this.submitEdit = this.submitEdit.bind(this)
+        this.searchPhonebooks = this.searchPhonebooks.bind(this)
+        this.handleDelete = this.handleDelete.bind(this)
+        this.closeModal = this.closeModal.bind(this)
+        this.deletePhonebook = this.deletePhonebook.bind(this)
+        this.handleSort = this.handleSort.bind(this)
+        this.setOpen = this.setOpen.bind(this)
+        this.setShowAlert = this.setShowAlert.bind(this)
+        this.setEditId = this.setEditId.bind(this)
+        this.setShowAlertCon = this.setShowAlertCon.bind(this)
+        this.handleResend = this.handleResend.bind(this)
+        this.handleCancelResend = this.handleCancelResend.bind(this)
+    }
+
+    componentDidMount() {
+        this.setState({ loading: true })
+        request.get('phonebooks').then(response => {
+            response.data.map(i => {
+                return i.sent = true
+            })
+            this.setState({
+                loading: false,
+                phonebooks: response.data,
+                showAlertCon: false,
+            })
+        }).catch(err => {
+            console.error(err)
+            this.setState({
+                showAlertCon: true,
+            })
+        })
+    }
+
+    handleAddName(e) {
+        this.setState({
+            addName: e.target.value
+        })
+    }
+    handleAddPhone(e) {
+        if (/^[0-9]*$/.test(e.target.value)) {
+            this.setState({
+                addPhone: e.target.value
+            })
+        } else {
+            this.setState({
+                addPhone: ''
             })
         }
-        fetchPhonebooks()
-    }, [])
-
-    function handleAddName(e) {
-        setAddName(e.target.value)
     }
-    function handleAddPhone(e) {
-        if (/^[0-9]*$/.test(e.target.value)) {
-            setAddPhone(e.target.value)
-        } else {
-            setAddPhone('')
-        }
-    }
-    function handleSubmitAdd(e) {
+    handleSubmitAdd(e) {
         e.preventDefault()
         request.post(`phonebooks`, {
-            name: addName,
-            phone: addPhone
+            name: this.state.addName,
+            phone: this.state.addPhone
         }).then(response => {
-            response.data.data.sent = true
-            setPhonebooks(old => [...old, response.data.data])
-            setAddName('')
-            setAddPhone('')
-            setShowAlert(true)
+            this.setState({
+                phonebooks: [...this.state.phonebooks, response.data.data],
+                addName: '',
+                addPhone: '',
+                showAlert: true,
+                showAlertCon: false
+            })
         }).catch(err => {
-            setPhonebooks(old => [...old, {_id:uuidv4(), name: addName, phone: addPhone, sent:false }])
-            setAddName('')
-            setAddPhone('')
-            setShowAlertCon(true)
+            this.setState({
+                phonebooks: [...this.state.phonebooks, { _id: uuidv4(), name: this.state.addName, phone: this.state.addPhone, sent: false }],
+                addName: '',
+                addPhone: '',
+                showAlertCon: true
+            })
         })
     }
-    function handleEditName(e) {
-        setEditName(e.target.value)
+    handleEditName(e) {
+        this.setState({
+            editName: e.target.value
+        })
     }
-    function handleEditPhone(e) {
+    handleEditPhone(e) {
         if (/^[0-9]*$/.test(e.target.value)) {
-            setEditPhone(e.target.value)
+            this.setState({
+                editPhone: e.target.value
+            })
         } else {
-            setEditPhone('')
+            this.setState({
+                editPhone: ''
+            })
         }
     }
-    function handleEdit(id, name, phone) {
-        setEditId(id)
-        setEditName(name)
-        setEditPhone(phone)
-    }
-    function handleSubmitEdit(e) {
-        e.preventDefault()
-        submitEdit()
-    }
-    function submitEdit() {
-        request.put(`phonebooks/${editId}`, {
-            name: editName,
-            phone: editPhone,
-        }).then(response => {
-            setPhonebooks(response.data.data)
-            setEditId('')
-            handleSort()
-            inputSearchName.current.value = null
-            inputSearchPhone.current.value = null
-            setShowAlertCon(false)
-        }).catch(err => {
-            setShowAlertCon(true)
+    handleEdit(id, name, phone) {
+        this.setState({
+            editId: id,
+            editName: name,
+            editPhone: phone
         })
     }
-
-    function searchPhonebooks(sort) {
-        setLoading(true)
-        if (!/^[0-9]*$/.test(inputSearchPhone.current.value)) {
-            inputSearchPhone.current.value = null
+    handleSubmitEdit(e) {
+        e.preventDefault()
+        this.submitEdit()
+    }
+    submitEdit() {
+        request.put(`phonebooks/${this.state.editId}`, {
+            name: this.state.editName,
+            phone: this.state.editPhone,
+        }).then(response => {
+            this.setState({
+                phonebooks: response.data.data,
+                editId: '',
+                showAlertCon: false
+            })
+            this.inputSearchName.current.value = null
+            this.inputSearchPhone.current.value = null
+            this.handleSort()
+        }).catch(err => {
+            this.setState({
+                showAlertCon: true
+            })
+        })
+    }
+    searchPhonebooks(sort) {
+        this.setState({
+            loading: true
+        })
+        if (!/^[0-9]*$/.test(this.inputSearchPhone.current.value)) {
+            this.inputSearchPhone.current.value = null
         }
         request.post(`phonebooks/search`, {
-            name: inputSearchName.current.value,
-            phone: inputSearchPhone.current.value,
+            name: this.inputSearchName.current.value,
+            phone: this.inputSearchPhone.current.value,
             sort: sort
         }).then(response => {
-            setLoading(false)
-            setPhonebooks(response.data)
-            setShowAlertCon(false)
+            this.setState({
+                loading: false,
+                phonebooks: response.data,
+                showAlertCon: false
+            })
         }).catch(err => {
-            setShowAlertCon(true)
+            this.setState({
+                showAlertCon: true
+            })
         })
     }
-    function handleDelete(id) {
-        setDeleteId(id)
-        setModalOpen(true)
-    }
-    function closeModal() {
-        setDeleteId('')
-        setModalOpen(false)
-    }
-    function deletePhonebook() {
-        request.delete(`phonebooks/${deleteId}`).then(response => {
-            setPhonebooks(phonebooks.filter(i => { return i._id !== deleteId }))
-            setDeleteId('')
-            setModalOpen(false)
-            setShowAlertCon(false)
-        }).catch(err => {
-            setShowAlertCon(true)
+    handleDelete(id) {
+        this.setState({
+            deleteId: id,
+            modalOpen: true
         })
     }
-    function handleSort(sort) {
-        setSortBy(sort)
-        searchPhonebooks(sort)
+    closeModal() {
+        this.setState({
+            deleteId: '',
+            modalOpen: false
+        })
     }
-    function handleResend(id, name, phone) {
+    deletePhonebook() {
+        request.delete(`phonebooks/${this.state.deleteId}`).then(response => {
+            this.setState({
+                phonebooks: this.state.phonebooks.filter(i => { return i._id !== this.state.deleteId }),
+                deleteId: '',
+                modalOpen: false,
+                showAlertCon: false
+            })
+        }).catch(err => {
+            this.setState({
+                showAlertCon: true
+            })
+        })
+    }
+    handleSort(sort) {
+        this.setState({
+            sortBy: sort
+        })
+        this.searchPhonebooks(sort)
+    }
+    setOpen(o) {
+        this.setState({
+            open: o
+        })
+    }
+    setShowAlert(s) {
+        this.setState({
+            showAlert: s
+        })
+    }
+    setEditId(i) {
+        this.setState({
+            editId: i
+        })
+    }
+    setShowAlertCon(s) {
+        this.setState({
+            showAlertCon: s
+        })
+    }
+    handleResend(id, name, phone) {
         request.post(`phonebooks`, {
             name: name,
             phone: phone
         }).then(response => {
             response.data.data.sent = true
-            setPhonebooks([...phonebooks.filter(i=>{return i._id !== id}), response.data.data])
-            setShowAlertCon(false)
+            this.setState({
+                phonebooks: [...this.state.phonebooks.filter(i => { return i._id !== id }), response.data.data],
+                showAlertCon: false
+            })
         }).catch(err => {
-            setShowAlertCon(true)
+            this.setState({
+                showAlertCon: true
+            })
         })
     }
-    function handleCancelResend(id, name, phone) {
-        setPhonebooks(phonebooks.filter(i=>{return i._id !== id}))
+    handleCancelResend(id) {
+        this.setState({
+            phonebooks: this.state.phonebooks.filter(i => { return i._id !== id }),
+        })
     }
-
-
-    const indexOfLastPost = currentPage * postsPerPage
-    const indexOfFirstPost = indexOfLastPost - postsPerPage
-    const currentPosts = phonebooks.slice(indexOfFirstPost, indexOfLastPost)
-    const paginate = pageNumber => setCurrentPage(pageNumber)
-    const pageNumbers = []
-    for (let i = 1; i <= Math.ceil(phonebooks.length / postsPerPage); i++) {
-        pageNumbers.push(i)
+    render() {
+        const indexOfLastPost = this.state.currentPage * this.state.postsPerPage
+        const indexOfFirstPost = indexOfLastPost - this.state.postsPerPage
+        const currentPosts = this.state.phonebooks.slice(indexOfFirstPost, indexOfLastPost)
+        const paginate = (pageNumber) => {
+            this.setState({
+                currentPage: pageNumber
+            })
+        }
+        const pageNumbers = []
+        for (let i = 1; i <= Math.ceil(this.state.phonebooks.length / this.state.postsPerPage); i++) {
+            pageNumbers.push(i)
+        }
+        return (
+            <Container className="mt-4">
+                <Title />
+                <AddPhonebook
+                    open={this.state.open}
+                    setOpen={this.setOpen}
+                    handleSubmitAdd={this.handleSubmitAdd}
+                    handleAddName={this.handleAddName}
+                    addName={this.state.addName}
+                    handleAddPhone={this.handleAddPhone}
+                    addPhone={this.state.addPhone}
+                    showAlert={this.state.showAlert}
+                    setShowAlert={this.setShowAlert}
+                    showAlertCon={this.state.showAlertCon}
+                    setShowAlertCon={this.setShowAlertCon}
+                />
+                <SearchForm
+                    searchPhonebooks={this.searchPhonebooks}
+                    inputSearchName={this.inputSearchName}
+                    inputSearchPhone={this.inputSearchPhone}
+                />
+                <TablePhonebook
+                    sortBy={this.state.sortBy}
+                    handleSort={this.handleSort}
+                    loading={this.state.loading}
+                    currentPosts={currentPosts}
+                    editId={this.state.editId}
+                    currentPage={this.state.currentPage}
+                    handleSubmitEdit={this.handleSubmitEdit}
+                    submitEdit={this.submitEdit}
+                    editName={this.state.editName}
+                    handleEditName={this.handleEditName}
+                    editPhone={this.state.editPhone}
+                    handleEditPhone={this.handleEditPhone}
+                    setEditId={this.setEditId}
+                    handleEdit={this.handleEdit}
+                    handleDelete={this.handleDelete}
+                    postsPerPage={this.state.postsPerPage}
+                    handleResend={this.handleResend}
+                    handleCancelResend={this.handleCancelResend}
+                />
+                <PaginationButton
+                    paginate={paginate}
+                    currentPage={this.state.currentPage}
+                    pageNumbers={pageNumbers}
+                />
+                <ModalDelete
+                    modalOpen={this.state.modalOpen}
+                    closeModal={this.closeModal}
+                    deletePhonebook={this.deletePhonebook}
+                />
+            </Container>
+        )
     }
-
-    return (
-        <Container className="mt-4">
-            <Title />
-            <AddPhonebook
-                open={open}
-                setOpen={setOpen}
-                handleSubmitAdd={handleSubmitAdd}
-                handleAddName={handleAddName}
-                addName={addName}
-                handleAddPhone={handleAddPhone}
-                addPhone={addPhone}
-                showAlert={showAlert}
-                setShowAlert={setShowAlert}
-                showAlertCon={showAlertCon}
-                setShowAlertCon={setShowAlertCon}
-            />
-            <SearchForm
-                searchPhonebooks={searchPhonebooks}
-                inputSearchName={inputSearchName}
-                inputSearchPhone={inputSearchPhone}
-            />
-            <TablePhonebook
-                sortBy={sortBy}
-                handleSort={handleSort}
-                loading={loading}
-                currentPosts={currentPosts}
-                editId={editId}
-                currentPage={currentPage}
-                handleSubmitEdit={handleSubmitEdit}
-                submitEdit={submitEdit}
-                editName={editName}
-                handleEditName={handleEditName}
-                editPhone={editPhone}
-                handleEditPhone={handleEditPhone}
-                setEditId={setEditId}
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-                postsPerPage={postsPerPage}
-                handleResend={handleResend}
-                handleCancelResend={handleCancelResend}
-            />
-            <PaginationButton
-                paginate={paginate}
-                currentPage={currentPage}
-                pageNumbers={pageNumbers}
-            />
-            <ModalDelete
-                modalOpen={modalOpen}
-                closeModal={closeModal}
-                deletePhonebook={deletePhonebook}
-            />
-        </Container>
-    );
 }
-
-export default App;
