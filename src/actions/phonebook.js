@@ -96,6 +96,7 @@ export const removePhonebook = (_id) => (dispatch) => {
     return request(endpoint, mutationDelete, variablesDelete).then((response) => {
         dispatch(removePhonebookSuccess(_id))
     }).catch(err => {
+        console.error(err)
         dispatch(removePhonebookFailure(_id))
     })
 }
@@ -163,11 +164,13 @@ export const editPhonebook = (id, name, phone) => (dispatch) => {
     }
 
     return request(endpoint, mutationEdit, variablesEdit).then((response) => {
+        console.log('hai')
         dispatch(editPhonebookSuccess(id, name, phone))
     }).catch(err => {
         console.error(err)
         dispatch(editPhonebookFailure())
     })
+    
 }
 
 const searchPhonebookSuccess = phonebooks => ({

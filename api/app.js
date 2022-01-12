@@ -10,7 +10,6 @@ var phonebook = require('./graphql/phonebook')
 mongoose.connect('mongodb://localhost:27017/phonebookdb');
 
 var indexRouter = require('./routes/index');
-var phonebooksRouter = require('./routes/phonebooks');
 
 var app = express();
 
@@ -22,7 +21,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors())
 
 app.use('/', indexRouter);
-app.use('/api/phonebooks', phonebooksRouter);
 
 app.use('/graphql', graphqlHTTP({
     schema: phonebook.schema,
